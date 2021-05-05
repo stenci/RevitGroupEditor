@@ -21,7 +21,7 @@ namespace GroupEditor
             {
                 TaskDialog.Show("Group Editor",
                     "Please select a group and try again.");
-                return Result.Succeeded;
+                return Result.Cancelled;
             }
 
             var group = doc.GetElement(selectedElements.First()) as Group;
@@ -29,7 +29,7 @@ namespace GroupEditor
             {
                 TaskDialog.Show("Group Editor",
                     "Please select a group and try again.");
-                return Result.Succeeded;
+                return Result.Cancelled;
             }
 
             using (var tx = new Transaction(doc))
@@ -92,7 +92,7 @@ namespace GroupEditor
             {
                 TaskDialog.Show("Group Editor",
                     "Please select the elements to add to the group and try again.");
-                return Result.Succeeded;
+                return Result.Cancelled;
             }
 
             var groupName = Utils.PickOneOfTheGroupsBeingEdited(doc,
