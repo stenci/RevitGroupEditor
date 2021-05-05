@@ -125,6 +125,9 @@ namespace GroupEditor
 
             if (oldGroupType != null)
             {
+                // testing against the group.Id is required because calling both Group.UngroupMembers and
+                // GroupType.Groups in the same transaction causes GroupType.Groups to return the ungrouped group.
+                // See https://forums.autodesk.com/t5/revit-api-forum/why-does-grouptype-groups-contain-ungrouped-groups/m-p/10292162
                 foreach (Group group in oldGroupType.Groups)
                 {
                     if (group.Id != _groupId)
