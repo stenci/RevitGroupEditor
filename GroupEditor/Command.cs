@@ -56,8 +56,7 @@ namespace GroupEditor
             var doc = uidoc.Document;
 
             var groupName = Utils.PickOneOfTheGroupsBeingEdited(doc,
-                "Select the group to finish the editing.",
-                "Group {} has been restored.");
+                "Select the name of the group of the elements to regroup.");
 
             if (groupName == null)
                 return Result.Cancelled;
@@ -71,6 +70,9 @@ namespace GroupEditor
 
                 tx.Commit();
             }
+
+            TaskDialog.Show("Group Editor",
+                $"The elements of the group \"{groupName}\" have been regrouped.");
 
             return Result.Succeeded;
         }
@@ -94,8 +96,7 @@ namespace GroupEditor
             }
 
             var groupName = Utils.PickOneOfTheGroupsBeingEdited(doc,
-                "Select the group you want to add the pre-selected elements to.",
-                "The pre-selected elements have been added to group {}.");
+                "Select the name of the group you want to add the pre-selected elements to.");
 
             if (groupName == null)
                 return Result.Cancelled;
@@ -112,6 +113,9 @@ namespace GroupEditor
                 tx.Commit();
             }
 
+            TaskDialog.Show("Group Editor",
+                $"The pre-selected elements have been added to group \"{groupName}\".");
+
             return Result.Succeeded;
         }
     }
@@ -126,8 +130,7 @@ namespace GroupEditor
             var doc = uidoc.Document;
 
             var groupName = Utils.PickOneOfTheGroupsBeingEdited(doc,
-                "Select the group whose entities you want to delete the group being edited info.",
-                "Group {} has been deleted.");
+                "Select the name of the group whose entities' group info you want to remove.");
 
             if (groupName == null)
                 return Result.Cancelled;
@@ -142,14 +145,16 @@ namespace GroupEditor
                 tx.Commit();
             }
 
+            TaskDialog.Show("Group Editor",
+                $"Group \"{groupName}\" has been removed from all entities' info.");
+
             return Result.Succeeded;
         }
     }
 
     static class Utils
     {
-        public static string PickOneOfTheGroupsBeingEdited(Document doc,
-            string mainInstruction, string messageIfOnlyOneName)
+        public static string PickOneOfTheGroupsBeingEdited(Document doc, string mainInstruction)
         {
             var groupNames = GroupEditor.GetNamesOfGroupsBeingEdited(doc).ToList();
             groupNames.Sort();
@@ -162,12 +167,7 @@ namespace GroupEditor
             }
 
             if (groupNames.Count == 1)
-            {
-                if (messageIfOnlyOneName != null)
-                    TaskDialog.Show("Group Editor",
-                        messageIfOnlyOneName.Replace("{}", groupNames[0]));
                 return groupNames[0];
-            }
 
             var dialog = new TaskDialog("Group Editor") {MainInstruction = mainInstruction};
 
