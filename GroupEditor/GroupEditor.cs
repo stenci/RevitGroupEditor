@@ -15,6 +15,7 @@ namespace GroupEditor
         private readonly string _groupName;
         private readonly bool _pinned;
         private readonly XYZ _locationPoint;
+        private ICollection<ElementId> _inMemoryElements = new List<ElementId>();
 
         private static Schema _schema;
         private static Field _fieldGroupName, _fieldPinned, _fieldLocationPoint;
@@ -43,10 +44,9 @@ namespace GroupEditor
             _locationPoint = firstElementSchema.Get<XYZ>("LocationPoint", UnitTypeId.Feet);
         }
 
-        public void StartEditing()
+        public void StartEditingWithSchema()
         {
-            if (_group == null)
-                throw new InvalidOperationException("The group is already open");
+            CheckIfAlreadyEditing();
 
             foreach (var id in _group.UngroupMembers())
                 SetElementSchema(_doc.GetElement(id));
@@ -54,9 +54,36 @@ namespace GroupEditor
             _group = null;
         }
 
+        public void StartEditingInMemory()
+        {
+            CheckIfAlreadyEditing();
+
+            _inMemoryElements = _group.UngroupMembers();
+
+            _group = null;
+        }
+
+        private void CheckIfAlreadyEditing()
+        {
+            if (_group == null || _inMemoryElements.Count != 0)
+                throw new InvalidOperationException("Group already being edited");
+
+            if (GetNamesOfGroupsBeingEdited(_doc).Contains(_groupName))
+                throw new InvalidOperationException($"Another instance of \"{_groupName}\" is already being edited");
+        }
+
         public void AddElement(Element element)
         {
-            SetElementSchema(element);
+            if (_inMemoryElements.Count != 0)
+                _inMemoryElements.Add(element.Id);
+            else
+                SetElementSchema(element);
+        }
+
+        public void AddElements(List<Element> elements)
+        {
+            foreach (var element in elements)
+                AddElement(element);
         }
 
         private void SetElementSchema(Element element)
@@ -70,11 +97,19 @@ namespace GroupEditor
 
         public void FinishEditing()
         {
-            var elements = new List<ElementId>();
-            foreach (var element in GroupElements())
+            List<ElementId> elements;
+            if (_inMemoryElements.Count > 0)
             {
-                elements.Add(element.Id);
-                element.DeleteEntity(_schema);
+                elements = (List<ElementId>) _inMemoryElements;
+            }
+            else
+            {
+                elements = new List<ElementId>();
+                foreach (var element in GroupElements())
+                {
+                    elements.Add(element.Id);
+                    element.DeleteEntity(_schema);
+                }
             }
 
             _group = _doc.Create.NewGroup(elements);

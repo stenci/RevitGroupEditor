@@ -37,7 +37,7 @@ namespace GroupEditor
                 tx.Start("Group Editor Start Editing");
 
                 var groupEditor = new GroupEditor(group);
-                groupEditor.StartEditing();
+                groupEditor.StartEditingWithSchema();
 
                 tx.Commit();
             }
@@ -152,7 +152,66 @@ namespace GroupEditor
         }
     }
 
-    static class Utils
+    [Transaction(TransactionMode.Manual)]
+    public class GroupEditorAddFromPreSelection : IExternalCommand
+    {
+        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+        {
+            var app = commandData.Application;
+            var uidoc = app.ActiveUIDocument;
+            var doc = uidoc.Document;
+
+            Group group = null;
+            var elementsToAdd = new List<Element>();
+
+            foreach (var elementId in uidoc.Selection.GetElementIds())
+            {
+                var element = doc.GetElement(elementId);
+
+                if (element as Group != null)
+                {
+                    if (group != null)
+                    {
+                        TaskDialog.Show("Group Editor",
+                            "Please select one group and a few entities to add and try again.");
+                        return Result.Cancelled;
+                    }
+
+                    group = element as Group;
+                }
+                else
+                {
+                    elementsToAdd.Add(element);
+                }
+            }
+
+            if (elementsToAdd.Count == 0 || group == null)
+            {
+                TaskDialog.Show("Group Editor",
+                    "Please select one group and a few entities to add and try again.");
+                return Result.Cancelled;
+            }
+
+            using (var tx = new Transaction(doc))
+            {
+                tx.Start("Group Editor Add From Pre-selection");
+
+                var groupEditor = new GroupEditor(group);
+                groupEditor.StartEditingInMemory();
+                groupEditor.AddElements(elementsToAdd);
+                groupEditor.FinishEditing();
+
+                tx.Commit();
+            }
+
+            TaskDialog.Show("Group Editor",
+                $"{elementsToAdd.Count} elements have been added to \"{group.GroupType.Name}\"");
+
+            return Result.Succeeded;
+        }
+    }
+
+    internal static class Utils
     {
         public static string PickOneOfTheGroupsBeingEdited(Document doc, string mainInstruction)
         {
