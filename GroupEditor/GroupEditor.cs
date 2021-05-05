@@ -15,10 +15,11 @@ namespace GroupEditor
         private readonly string _groupName;
         private readonly bool _pinned;
         private readonly XYZ _locationPoint;
+        private readonly ElementId _groupId;
         private ICollection<ElementId> _inMemoryElements = new List<ElementId>();
 
         private static Schema _schema;
-        private static Field _fieldGroupName, _fieldPinned, _fieldLocationPoint;
+        private static Field _fieldGroupName, _fieldPinned, _fieldLocationPoint, _fieldGroupId;
 
         public GroupEditor(Group group)
         {
@@ -30,6 +31,7 @@ namespace GroupEditor
             _groupName = group.GroupType.Name;
             _pinned = group.Pinned;
             _locationPoint = (group.Location as LocationPoint).Point;
+            _groupId = group.Id;
         }
 
         public GroupEditor(Document doc, string ungroupedGroupName)
@@ -42,6 +44,7 @@ namespace GroupEditor
             var firstElementSchema = GroupElements().First().GetEntity(_schema);
             _pinned = firstElementSchema.Get<bool>("Pinned");
             _locationPoint = firstElementSchema.Get<XYZ>("LocationPoint", UnitTypeId.Feet);
+            _groupId = firstElementSchema.Get<ElementId>("GroupId");
         }
 
         public void StartEditingWithSchema()
@@ -92,6 +95,7 @@ namespace GroupEditor
             schemaEntity.Set(_fieldGroupName, _groupName);
             schemaEntity.Set(_fieldPinned, _pinned);
             schemaEntity.Set(_fieldLocationPoint, _locationPoint, UnitTypeId.Feet);
+            schemaEntity.Set(_fieldGroupId, _groupId);
             element.SetEntity(schemaEntity);
         }
 
@@ -123,8 +127,11 @@ namespace GroupEditor
             {
                 foreach (Group group in oldGroupType.Groups)
                 {
-                    group.GroupType = _group.GroupType;
-                    group.Location.Move((_group.Location as LocationPoint).Point - _locationPoint);
+                    if (group.Id != _groupId)
+                    {
+                        group.GroupType = _group.GroupType;
+                        group.Location.Move((_group.Location as LocationPoint).Point - _locationPoint);
+                    }
                 }
 
                 _doc.Delete(oldGroupType.Id);
@@ -161,7 +168,7 @@ namespace GroupEditor
         {
             if (_schema != null) goto getSchemaFields;
 
-            var schemaGuid = new Guid("98140745-875d-4e4e-8e5e-a36146a4e844");
+            var schemaGuid = new Guid("98140745-875d-4e4e-8e5e-a36146a4e845");
             _schema = Schema.Lookup(schemaGuid);
             if (_schema != null) goto getSchemaFields;
 
@@ -172,6 +179,7 @@ namespace GroupEditor
             schemaBuilder.AddSimpleField("GroupName", typeof(string));
             schemaBuilder.AddSimpleField("Pinned", typeof(bool));
             schemaBuilder.AddSimpleField("LocationPoint", typeof(XYZ)).SetSpec(SpecTypeId.Length);
+            schemaBuilder.AddSimpleField("GroupId", typeof(ElementId));
             _schema = schemaBuilder.Finish();
 
             getSchemaFields:
@@ -179,6 +187,7 @@ namespace GroupEditor
             _fieldGroupName = _schema.GetField("GroupName");
             _fieldPinned = _schema.GetField("Pinned");
             _fieldLocationPoint = _schema.GetField("LocationPoint");
+            _fieldGroupId = _schema.GetField("GroupId");
         }
     }
 }
