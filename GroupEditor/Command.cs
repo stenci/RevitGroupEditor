@@ -137,7 +137,7 @@ namespace GroupEditor
                 tx.Start("Group Editor Purge");
 
                 var groupEditor = new GroupEditor(doc, groupName);
-                groupEditor.DeleteAllGroupEditorSchemas();
+                groupEditor.DeleteEntitySchemas();
 
                 tx.Commit();
             }

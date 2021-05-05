@@ -109,7 +109,7 @@ namespace GroupEditor
                 .Distinct();
         }
 
-        public void DeleteAllGroupEditorSchemas()
+        public void DeleteEntitySchemas()
         {
             foreach (var element in GroupElements())
                 element.DeleteEntity(_schema);
