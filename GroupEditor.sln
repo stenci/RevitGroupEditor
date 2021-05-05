@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupEditor", "GroupEditor\GroupEditor.csproj", "{FEDBD64C-718D-4518-902F-2F9DF82209C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FEDBD64C-718D-4518-902F-2F9DF82209C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEDBD64C-718D-4518-902F-2F9DF82209C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEDBD64C-718D-4518-902F-2F9DF82209C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEDBD64C-718D-4518-902F-2F9DF82209C5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
