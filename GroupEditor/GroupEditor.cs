@@ -82,16 +82,40 @@ namespace GroupEditor
                 SetElementSchema(element);
         }
 
-        public void AddElements(List<Element> elements)
+        public void AddElement(ElementId elementId)
+        {
+            if (_inMemoryElements.Count != 0)
+                _inMemoryElements.Add(elementId);
+            else
+                SetElementSchema(_doc.GetElement(elementId));
+        }
+
+        public void AddElements(IEnumerable<Element> elements)
         {
             foreach (var element in elements)
                 AddElement(element);
         }
 
-        public void AddElements(List<ElementId> elementsIds)
+        public void AddElements(IEnumerable<ElementId> elementsIds)
         {
             foreach (var elementId in elementsIds)
-                AddElement(_doc.GetElement(elementId));
+                AddElement(elementId);
+        }
+
+        public void RemoveElement(Element element)
+        {
+            if (_group != null)
+                throw new InvalidOperationException("RemoveElement can only be used with StartEditingInMemory");
+
+            _inMemoryElements.Remove(element.Id);
+        }
+
+        public void RemoveElement(ElementId elementId)
+        {
+            if (_group != null)
+                throw new InvalidOperationException("RemoveElement can only be used with StartEditingInMemory");
+
+            _inMemoryElements.Remove(elementId);
         }
 
         private void SetElementSchema(Element element)
