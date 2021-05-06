@@ -89,6 +89,12 @@ namespace GroupEditor
                 AddElement(element);
         }
 
+        public void AddElements(List<ElementId> elementsIds)
+        {
+            foreach (var elementId in elementsIds)
+                AddElement(_doc.GetElement(elementId));
+        }
+
         private void SetElementSchema(Element element)
         {
             var schemaEntity = new Entity(_schema);
