@@ -105,7 +105,7 @@ namespace GroupEditor
             element.SetEntity(schemaEntity);
         }
 
-        public void FinishEditing()
+        public Group FinishEditing()
         {
             List<ElementId> elements;
             if (_inMemoryElements.Count > 0)
@@ -148,6 +148,8 @@ namespace GroupEditor
 
             _group.GroupType.Name = _groupName;
             _group.Pinned = _pinned;
+
+            return _group;
         }
 
         public static IEnumerable<string> GetNamesOfGroupsBeingEdited(Document doc)
