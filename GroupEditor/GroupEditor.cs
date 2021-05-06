@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.ExtensibleStorage;
-using InvalidOperationException = System.InvalidOperationException;
 
 namespace GroupEditor
 {
@@ -170,6 +169,9 @@ namespace GroupEditor
 
         public IEnumerable<Element> GroupElements()
         {
+            if (_inMemoryElements.Count > 0)
+                return _inMemoryElements.Select(elementId => _doc.GetElement(elementId)).ToList();
+            
             return new FilteredElementCollector(_doc)
                 .WherePasses(new ExtensibleStorageFilter(_schema.GUID))
                 .Where(element => element.GetEntity(_schema).Get<string>("GroupName") == _groupName);
