@@ -37,7 +37,7 @@ namespace GroupEditor
                 tx.Start("Group Editor Start Editing");
 
                 var groupEditor = new GroupEditor(group);
-                groupEditor.StartEditingWithSchema();
+                groupEditor.StartEditing();
 
                 tx.Commit();
             }
@@ -121,38 +121,6 @@ namespace GroupEditor
     }
 
     [Transaction(TransactionMode.Manual)]
-    public class GroupEditorPurge : IExternalCommand
-    {
-        public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
-        {
-            var app = commandData.Application;
-            var uidoc = app.ActiveUIDocument;
-            var doc = uidoc.Document;
-
-            var groupName = Utils.PickOneOfTheGroupsBeingEdited(doc,
-                "Select the name of the group whose entities' group info you want to remove.");
-
-            if (groupName == null)
-                return Result.Cancelled;
-
-            using (var tx = new Transaction(doc))
-            {
-                tx.Start("Group Editor Purge");
-
-                var groupEditor = new GroupEditor(doc, groupName);
-                groupEditor.DeleteEntitySchemas();
-
-                tx.Commit();
-            }
-
-            TaskDialog.Show("Group Editor",
-                $"Group \"{groupName}\" has been removed from all entities' info.");
-
-            return Result.Succeeded;
-        }
-    }
-
-    [Transaction(TransactionMode.Manual)]
     public class GroupEditorAddFromPreSelection : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
@@ -168,7 +136,7 @@ namespace GroupEditor
             {
                 var element = doc.GetElement(elementId);
 
-                if (element as Group != null)
+                if (element is Group)
                 {
                     if (group != null)
                     {
@@ -192,12 +160,14 @@ namespace GroupEditor
                 return Result.Cancelled;
             }
 
+            var groupName = group.GroupType.Name;
+
             using (var tx = new Transaction(doc))
             {
                 tx.Start("Group Editor Add From Pre-selection");
 
                 var groupEditor = new GroupEditor(group);
-                groupEditor.StartEditingInMemory();
+                groupEditor.StartEditing();
                 groupEditor.AddElements(elementsToAdd);
                 groupEditor.FinishEditing();
 
@@ -205,7 +175,7 @@ namespace GroupEditor
             }
 
             TaskDialog.Show("Group Editor",
-                $"{elementsToAdd.Count} elements have been added to \"{group.GroupType.Name}\"");
+                $"{elementsToAdd.Count} elements have been added to \"{groupName}\"");
 
             return Result.Succeeded;
         }
