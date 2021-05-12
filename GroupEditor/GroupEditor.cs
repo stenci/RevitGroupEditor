@@ -78,6 +78,10 @@ namespace GroupEditor
 
         public Group FinishEditing()
         {
+            if (!GroupElements().Any())
+                throw new InvalidOperationException(
+                    "None of the elements listed as group members is valid.\n\nPerhaps they have been deleted?");
+
             _group = _doc.Create.NewGroup(_members);
 
             // find other instances of the same GroupType and update them
@@ -172,7 +176,10 @@ namespace GroupEditor
 
         public IEnumerable<Element> GroupElements()
         {
-            return _members.Select(elementId => _doc.GetElement(elementId)).ToList();
+            return _members
+                .Select(elementId => _doc.GetElement(elementId))
+                .Where(element => element != null)
+                .ToList();
         }
 
         #endregion
