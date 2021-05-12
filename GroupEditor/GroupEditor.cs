@@ -70,8 +70,13 @@ namespace GroupEditor
             if (_dataStorage != null)
                 throw new InvalidOperationException($"Another instance of \"{_groupName}\" is already being edited");
 
-            _members = (IList<ElementId>) _group.UngroupMembers();
             SetDataStorageFields(_groupName, _pinned, _locationPoint, _groupId, _members);
+
+            var groupType = _group.GroupType;
+            var groupTypeMustBeDeleted = groupType.Groups.Size == 1;
+            _members = (IList<ElementId>) _group.UngroupMembers();
+            if (groupTypeMustBeDeleted)
+                _doc.Delete(groupType.Id);
 
             _group = null;
         }
@@ -240,7 +245,7 @@ namespace GroupEditor
             _dataStorage.SetEntity(_storageEntity);
         }
 
-        private static void DeleteDataStorageSchemaEntity(Document doc, string groupName)
+        public static void DeleteDataStorageSchemaEntity(Document doc, string groupName)
         {
             var schema = GetSchema();
             var groupNameField = schema.GetField("GroupName");
@@ -252,6 +257,14 @@ namespace GroupEditor
                 if (existingDataStorage.IsValid() && existingDataStorage.Get<string>(groupNameField) == groupName)
                 {
                     doc.Delete(element.Id);
+
+                    var groupType = new FilteredElementCollector(doc)
+                        .OfClass(typeof(GroupType))
+                        .FirstOrDefault(gt => gt.Name == groupName) as GroupType;
+
+                    if (groupType != null && groupType.Groups.Size == 0)
+                        doc.Delete(groupType.Id);
+
                     return;
                 }
             }
