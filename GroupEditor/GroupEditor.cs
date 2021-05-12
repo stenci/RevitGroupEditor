@@ -168,7 +168,7 @@ namespace GroupEditor
 
         #region Collectors
 
-        public static IEnumerable<string> GetNamesOfGroupsBeingEdited(Document doc)
+        public static List<string> GetNamesOfGroupsBeingEdited(Document doc)
         {
             var schema = GetSchema();
             var groupEditorDataStorages = new FilteredElementCollector(doc).OfClass(typeof(DataStorage));
@@ -176,6 +176,7 @@ namespace GroupEditor
             return groupEditorDataStorages.Select(element => element.GetEntity(schema))
                 .Where(dataStorage => dataStorage.IsValid())
                 .Select(dataStorage => dataStorage.Get<string>("GroupName"))
+                .OrderBy(name => name)
                 .ToList();
         }
 
