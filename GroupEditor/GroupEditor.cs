@@ -9,10 +9,12 @@ namespace GroupEditor
 {
     class GroupEditor
     {
+        private static Schema _schema;
+        private static Field _groupNameField, _pinnedField, _locationPointField, _groupIdField, _membersField;
+
         private Group _group;
         private readonly Document _doc;
 
-        private Schema _schema;
         private DataStorage _dataStorage;
         private Entity _storageEntity;
 
@@ -52,10 +54,10 @@ namespace GroupEditor
                 throw new InstanceNotFoundException(
                     $"No instance of a the GroupType \"{_groupName}\" is being edited");
 
-            _pinned = _storageEntity.Get<bool>(_schema.GetField("Pinned"));
-            _locationPoint = _storageEntity.Get<XYZ>(_schema.GetField("LocationPoint"), UnitTypeId.Feet);
-            _groupId = _storageEntity.Get<ElementId>(_schema.GetField("GroupId"));
-            _members = _storageEntity.Get<IList<ElementId>>(_schema.GetField("Members"));
+            _pinned = _storageEntity.Get<bool>(_pinnedField);
+            _locationPoint = _storageEntity.Get<XYZ>(_locationPointField, UnitTypeId.Feet);
+            _groupId = _storageEntity.Get<ElementId>(_groupIdField);
+            _members = _storageEntity.Get<IList<ElementId>>(_membersField);
         }
 
         #endregion
@@ -170,10 +172,11 @@ namespace GroupEditor
 
         public static List<string> GetNamesOfGroupsBeingEdited(Document doc)
         {
-            var schema = GetSchema();
+            GetSchema();
+
             var groupEditorDataStorages = new FilteredElementCollector(doc).OfClass(typeof(DataStorage));
 
-            return groupEditorDataStorages.Select(element => element.GetEntity(schema))
+            return groupEditorDataStorages.Select(element => element.GetEntity(_schema))
                 .Where(dataStorage => dataStorage.IsValid())
                 .Select(dataStorage => dataStorage.Get<string>("GroupName"))
                 .OrderBy(name => name)
@@ -192,34 +195,43 @@ namespace GroupEditor
 
         #region Schema and DataStorage management
 
-        private static Schema GetSchema()
+        private static void GetSchema()
         {
-            var schemaGuid = new Guid("98140745-875d-4e4e-8e5e-a36146a4e847");
-            var schema = Schema.Lookup(schemaGuid);
-            if (schema != null)
-                return schema;
+            if (_schema != null)
+                return;
 
-            var schemaBuilder = new SchemaBuilder(schemaGuid);
-            schemaBuilder.SetSchemaName("GroupEditor");
-            schemaBuilder.SetReadAccessLevel(AccessLevel.Public);
-            schemaBuilder.SetWriteAccessLevel(AccessLevel.Public);
-            schemaBuilder.AddSimpleField("GroupName", typeof(string));
-            schemaBuilder.AddSimpleField("Pinned", typeof(bool));
-            schemaBuilder.AddSimpleField("LocationPoint", typeof(XYZ)).SetSpec(SpecTypeId.Length);
-            schemaBuilder.AddSimpleField("GroupId", typeof(ElementId));
-            schemaBuilder.AddArrayField("Members", typeof(ElementId));
-            return schemaBuilder.Finish();
+            var schemaGuid = new Guid("98140745-875d-4e4e-8e5e-a36146a4e847");
+            _schema = Schema.Lookup(schemaGuid);
+            if (_schema == null)
+            {
+                var schemaBuilder = new SchemaBuilder(schemaGuid);
+                schemaBuilder.SetSchemaName("GroupEditor");
+                schemaBuilder.SetReadAccessLevel(AccessLevel.Public);
+                schemaBuilder.SetWriteAccessLevel(AccessLevel.Public);
+                schemaBuilder.AddSimpleField("GroupName", typeof(string));
+                schemaBuilder.AddSimpleField("Pinned", typeof(bool));
+                schemaBuilder.AddSimpleField("LocationPoint", typeof(XYZ)).SetSpec(SpecTypeId.Length);
+                schemaBuilder.AddSimpleField("GroupId", typeof(ElementId));
+                schemaBuilder.AddArrayField("Members", typeof(ElementId));
+                _schema = schemaBuilder.Finish();
+            }
+
+            _groupNameField = _schema.GetField("GroupName");
+            _pinnedField = _schema.GetField("Pinned");
+            _locationPointField = _schema.GetField("LocationPoint");
+            _groupIdField = _schema.GetField("GroupId");
+            _membersField = _schema.GetField("Members");
         }
 
         private void GetDataStorageMembers()
         {
-            _schema = GetSchema();
-            var groupNameField = _schema.GetField("GroupName");
+            GetSchema();
+
             var dataStorages = new FilteredElementCollector(_doc).OfClass(typeof(DataStorage));
             foreach (var element in dataStorages)
             {
                 var entity = element.GetEntity(_schema);
-                if (entity.IsValid() && entity.Get<string>(groupNameField) == _groupName)
+                if (entity.IsValid() && entity.Get<string>(_groupNameField) == _groupName)
                 {
                     _storageEntity = entity;
                     _dataStorage = element as DataStorage;
@@ -248,14 +260,13 @@ namespace GroupEditor
 
         public static void DeleteDataStorageSchemaEntity(Document doc, string groupName)
         {
-            var schema = GetSchema();
-            var groupNameField = schema.GetField("GroupName");
+            GetSchema();
 
             var dataStorages = new FilteredElementCollector(doc).OfClass(typeof(DataStorage));
             foreach (var element in dataStorages)
             {
-                var existingDataStorage = element.GetEntity(schema);
-                if (existingDataStorage.IsValid() && existingDataStorage.Get<string>(groupNameField) == groupName)
+                var existingDataStorage = element.GetEntity(_schema);
+                if (existingDataStorage.IsValid() && existingDataStorage.Get<string>(_groupNameField) == groupName)
                 {
                     doc.Delete(element.Id);
 
