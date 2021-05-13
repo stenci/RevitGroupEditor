@@ -253,7 +253,7 @@ namespace GroupEditor
             if (pinned != null) _storageEntity.Set("Pinned", (bool) pinned);
             if (localPoint != null) _storageEntity.Set("LocationPoint", localPoint, UnitTypeId.Feet);
             if (groupId != null) _storageEntity.Set("GroupId", groupId);
-            if (members != null) _storageEntity.Set("Members", members);
+            if (members != null) _storageEntity.Set("Members", (IList<ElementId>) members.Distinct().ToList());
 
             _dataStorage.SetEntity(_storageEntity);
         }
